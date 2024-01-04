@@ -1,25 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const { log } = require('console');
 
 const app = express();
 const PORT = 3000;
 
 app.use(bodyParser.json());
 
-const usersPath= 'users.json';
+const usersPath = 'users.json';
 let logSecurity = {};
 
-// loading user
+// Loading user data
+const users = JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
 
-const users = JSON.parse(fs.readFileSync(usersPath, 'utf-8'))
-
-// auth middleware 
-
+// Auth middleware
 const authUser = (req, res, next) => {
-    const { username, password} =  req.body;
-    const user = users.find((u) => u.username === username && u.password === password)
+    const { username, password } = req.body;
+    const user = users.find((u) => u.username === username && u.password === password);
 
     if (user) {
         req.user = user;
@@ -28,37 +25,33 @@ const authUser = (req, res, next) => {
         const tries = logSecurity[username] || 0;
         logSecurity[username] = tries + 1;
 
-        if (tries >= 3 ){
-            res.status(401).json({ error: 'Too many failed attempts. Try again in 10 minutes'})
-        } else { 
-            res.status(401).json({error: 'Invalid credentials'});
+        if (tries >= 3) {
+            res.status(401).json({ error: 'Too many failed attempts. Try again in 10 minutes' });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
         }
     }
 };
 
-//new user
-
+// New user
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
-    const user = { username, password};
-    user.push(user);
+    const user = { username, password };
+    users.push(user); // Fix: push to the users array
     fs.writeFileSync(usersPath, JSON.stringify(users));
-    res.status(200).json({ message: 'User created succesfully'});
+    res.status(200).json({ message: 'User created successfully' });
 });
 
-
-// login endpoint
-
-app.post('/api/login', authenticate, (req, res) => {
-    const {username} = req.user;
-    delete logSecurity[username] // when logged in clears the login attemps
-    res.status(200).json({message: 'Login Succesfull'});
+// Login endpoint
+app.post('/api/login', authUser, (req, res) => { // Fix: use correct middleware name
+    const { username } = req.user;
+    delete logSecurity[username]; // when logged in, clear the login attempts
+    res.status(200).json({ message: 'Login successful' });
 });
 
-// logout
-app.post('/api/logout', (req, res ) => {
-    res.status(200).json({message: 'Logout succesful'});
-
+// Logout
+app.post('/api/logout', (req, res) => {
+    res.status(200).json({ message: 'Logout successful' });
 });
 
 app.listen(PORT, () => {
