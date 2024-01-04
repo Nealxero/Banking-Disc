@@ -1,26 +1,41 @@
-import React from "react";
+import React, {useState} from "react";
+import axios from 'axios'
 
-//include images into your bundle
-import rigoImage from "../../img/rigo-baby.jpg";
+const Auth = () => {
 
-//create your first component
-const Home = () => {
+	const [username, setUsername] = useState('');
+	const [password, setPassword] = useState('');
+	const [message, setMessage] = useState('');
+
+	const authLogic = async (url) => {
+		try { 
+			const response = await axios.post(`http://localhost:3000/api${url}`, { username, password});
+			setMessage(response.data.message);
+		} catch (error) {
+			setMessage(error.response.data.error);
+		}
+	};
+
 	return (
 		<div className="text-center">
-			<h1 className="text-center mt-5">Hello Rigo!</h1>
-			<p>
-				<img src={rigoImage} />
-			</p>
-			<a href="#" className="btn btn-success">
-				If you see this green button... bootstrap is working...
-			</a>
-			<p>
-				Made by{" "}
-				<a href="http://www.4geeksacademy.com">4Geeks Academy</a>, with
-				love!
-			</p>
+			<h1 className="text-center mt-5">Authentication</h1>
+			<div>
+				<label> Username: </label>
+				<input type="text" value={username} onChange={(e) => setUsername(e.target.value)}/>
+
+			</div>
+			<div>
+				<label> Password: </label>
+				<input type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+			</div>
+			<div>
+				<button onClick={() => authLogic('/register')}> Register </button>
+			 <button onClick={() => authLogic('/login')}>Login</button>
 		</div>
+		{message && <p>{message}</p>}
+		</div>
+		
 	);
 };
 
-export default Home;
+export default Auth;
